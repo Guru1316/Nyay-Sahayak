@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    AppBar, Box, Button, Container, Paper, Step, StepLabel, Stepper, Toolbar, 
-    Typography, CircularProgress, Dialog, DialogActions, DialogContent, 
+import {
+    AppBar, Box, Button, Container, Paper, Step, StepLabel, Stepper, Toolbar,
+    Typography, CircularProgress, Dialog, DialogActions, DialogContent,
     DialogTitle, TextField, List, ListItem, ListItemText, Divider, Snackbar, Alert,
     Accordion, AccordionSummary, AccordionDetails
 } from '@mui/material';
@@ -12,16 +12,21 @@ import axios from 'axios';
 const steps = ['Case Registered', 'Verification Pending', 'Sanction Pending', 'Disbursed'];
 
 export default function DashboardPage() {
-    // State to handle an array of cases
-    const [cases, setCases] = useState([]); 
+    const [user] = useState(() => {
+        try {
+            const storedUser = localStorage.getItem('user');
+            return storedUser ? JSON.parse(storedUser) : null;
+        } catch {
+            return null;
+        }
+    });
+
+    const [cases, setCases] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const user = JSON.parse(localStorage.getItem('user'));
-    
     const [grievances, setGrievances] = useState([]);
     const [openGrievanceDialog, setOpenGrievanceDialog] = useState(false);
     const [grievanceDetails, setGrievanceDetails] = useState('');
-
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
 
@@ -31,14 +36,15 @@ export default function DashboardPage() {
             const token = localStorage.getItem('token');
             if (!token) throw new Error("No token found");
 
-            const casePromise = axios.get('http://localhost:5000/api/cases/my-case', { headers: { 'Authorization': `Bearer ${token}` } });
-            const grievancePromise = axios.get('http://localhost:5000/api/grievances/my-grievances', { headers: { 'Authorization': `Bearer ${token}` } });
+            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+            const casePromise = axios.get(`${apiBaseUrl}/api/cases/my-case`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const grievancePromise = axios.get(`${apiBaseUrl}/api/grievances/my-grievances`, { headers: { 'Authorization': `Bearer ${token}` } });
 
             const [caseResponse, grievanceResponse] = await Promise.all([casePromise, grievancePromise]);
-            console.log("Frontend received cases:", caseResponse.data.cases);
+
             setCases(caseResponse.data.cases);
             setGrievances(grievanceResponse.data.grievances);
-
         } catch (err) {
             setError(err.message || 'Failed to fetch data.');
         } finally {
@@ -47,8 +53,20 @@ export default function DashboardPage() {
     };
 
     useEffect(() => {
+        if (!user) {
+            window.location.href = '/';
+            return;
+        }
         fetchData();
-    }, []);
+    }, [user]);
+
+    if (!user) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -65,16 +83,16 @@ export default function DashboardPage() {
         }
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5000/api/grievances', { details: grievanceDetails }, { headers: { 'Authorization': `Bearer ${token}` } });
+            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+            await axios.post(`${apiBaseUrl}/api/grievances`, { details: grievanceDetails }, { headers: { 'Authorization': `Bearer ${token}` } });
             setGrievanceDetails('');
             handleCloseGrievanceDialog();
             fetchData();
         } catch (error) {
-            console.error("Failed to submit grievance", error);
             alert("Failed to submit grievance.");
         }
     };
-    
+
     const handleKycSubmit = () => {
         setSnackbarMessage('e-KYC verification successful (Simulated)');
         setSnackbarOpen(true);
@@ -86,9 +104,10 @@ export default function DashboardPage() {
 
         try {
             const token = localStorage.getItem('token');
+            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
             const docData = { docType: 'Bank Passbook', docName: file.name };
-            
-            await axios.post(`http://localhost:5000/api/cases/${caseId}/documents`, docData, {
+
+            await axios.post(`${apiBaseUrl}/api/cases/${caseId}/documents`, docData, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -96,7 +115,6 @@ export default function DashboardPage() {
             setSnackbarOpen(true);
             fetchData();
         } catch (error) {
-            console.error("File upload failed", error);
             alert("File upload failed.");
         }
     };
@@ -107,9 +125,8 @@ export default function DashboardPage() {
         }
         setSnackbarOpen(false);
     };
-    
+
     const renderCaseContent = () => {
-        console.log("Component is rendering with this many cases:", cases.length);
         if (loading) return <CircularProgress sx={{ display: 'block', margin: 'auto', mt: 4 }} />;
         if (error) return <Typography color="error" align="center" sx={{ mt: 4 }}>Error: {error}</Typography>;
         if (cases.length === 0) {
@@ -120,7 +137,6 @@ export default function DashboardPage() {
                 </Paper>
             );
         }
-        // Map over the cases array and create an Accordion for each one
         return cases.map((caseData) => {
             const activeStep = steps.indexOf(caseData.status);
             return (

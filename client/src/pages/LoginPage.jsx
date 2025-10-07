@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Box, TextField, Button, Typography, Container, CircularProgress, Alert, AlertTitle } from '@mui/material';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/auth';
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 export default function LoginPage() {
     const [mobileNumber, setMobileNumber] = useState('');
@@ -16,11 +16,11 @@ export default function LoginPage() {
         setLoading(true);
         setError('');
         try {
-            await axios.post(`${API_URL}/send-otp`, { mobileNumber });
+            await axios.post(`${apiBaseUrl}/api/auth/send-otp`, { mobileNumber });
             setShowOtpInput(true);
-            setLoading(false);
         } catch (err) {
-            setError('Failed to send OTP. Please try again.');
+            setError('Failed to send OTP. Please check your connection and try again.');
+        } finally {
             setLoading(false);
         }
     };
@@ -30,17 +30,16 @@ export default function LoginPage() {
         setLoading(true);
         setError('');
         try {
-            const response = await axios.post(`${API_URL}/verify-otp`, { mobileNumber, otp });
+            const response = await axios.post(`${apiBaseUrl}/api/auth/verify-otp`, { mobileNumber, otp });
             const { token, user } = response.data;
             
             localStorage.setItem('token', token);
             localStorage.setItem('user', JSON.stringify(user));
             
-            setLoading(false);
             window.location.reload();
-
         } catch (err) {
             setError('Invalid OTP. Please try again.');
+        } finally {
             setLoading(false);
         }
     };
@@ -89,7 +88,7 @@ export default function LoginPage() {
                 ) : (
                     <Box component="form" onSubmit={handleVerifyOtp} sx={{ mt: 1 }}>
                         <Typography>
-                            OTP sent to {mobileNumber}.
+                            An OTP has been sent to your number.
                         </Typography>
                         <TextField
                             margin="normal"
