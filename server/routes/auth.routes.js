@@ -4,12 +4,10 @@ import jwt from 'jsonwebtoken';
 import twilio from 'twilio'; 
 
 const router = express.Router();
-
 const otpStore = {};
-
 const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
-// ## Endpoint 1: Send OTP (Rectified) ##
+// ## Endpoint 1: Send OTP (Final Version) ##
 router.post('/send-otp', async (req, res) => {
     const { mobileNumber } = req.body;
     if (!mobileNumber) {
@@ -19,16 +17,16 @@ router.post('/send-otp', async (req, res) => {
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     otpStore[mobileNumber] = { otp, expires: Date.now() + 300000 };
 
-    // --- THIS IS THE FIX ---
-    // If the number is the special demo number, don't send a real SMS.
-    if (mobileNumber === '9999999999') {
-        console.log(`✅ DEMO OTP for officer ${mobileNumber} is: ${otp}`);
+    // --- FINAL HACKATHON FIX ---
+    // If the number is a special demo number, don't send a real SMS.
+    if (mobileNumber === '9999999999' || mobileNumber === '8888888888') {
+        console.log(`✅ DEMO OTP for ${mobileNumber} is: ${otp}`);
         return res.status(200).json({ message: "OTP sent successfully (Demo)" });
     }
     // --- END FIX ---
 
     try {
-        const formattedMobileNumber = `+91${mobileNumber}`;
+        const formattedMobileNumber = `+91${mobileNumber}`; // Use your verified number for testing this part
         await client.messages.create({
             body: `Your OTP for Nyay Sahayak is: ${otp}`,
             from: process.env.TWILIO_PHONE_NUMBER,
@@ -38,11 +36,11 @@ router.post('/send-otp', async (req, res) => {
         res.status(200).json({ message: "OTP sent successfully" });
     } catch (error) {
         console.error("Failed to send SMS via Twilio:", error);
-        res.status(500).json({ message: "Failed to send OTP. Please try again later." });
+        res.status(500).json({ message: "Failed to send OTP. (Note: Trial accounts can only send to verified numbers)." });
     }
 });
 
-// ## Endpoint 2: Verify OTP and Login/Register (Updated for Demo) ##
+// ## Endpoint 2: Verify OTP and Login/Register (Final Version) ##
 router.post('/verify-otp', async (req, res) => {
     const { mobileNumber, otp } = req.body;
     if (!mobileNumber || !otp) {
@@ -50,11 +48,10 @@ router.post('/verify-otp', async (req, res) => {
     }
 
     const storedOtpData = otpStore[mobileNumber];
+    const isDemoNumber = mobileNumber === '9999999999' || mobileNumber === '8888888888';
 
-    // Accept any OTP for the magic number to make it easy for judges
-    if (mobileNumber === '9999999999') {
-        // For the demo user, we can be more lenient
-    } else if (!storedOtpData || storedOtpData.otp !== otp) {
+    // For demo numbers, accept any OTP. For real numbers, check the OTP.
+    if (!isDemoNumber && (!storedOtpData || storedOtpData.otp !== otp)) {
         return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
@@ -64,7 +61,7 @@ router.post('/verify-otp', async (req, res) => {
             user = new User({ mobileNumber });
         }
 
-        // If the user logs in with the magic number, assign them the officer role.
+        // Assign officer role for the specific magic number
         if (user.mobileNumber === '9999999999') {
             user.role = 'officer';
         }

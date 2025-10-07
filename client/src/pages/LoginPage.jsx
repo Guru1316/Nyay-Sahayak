@@ -116,12 +116,15 @@ export default function LoginPage() {
                 {error && <Typography color="error">{error}</Typography>}
 
                 <Alert severity="info" sx={{ mt: 4, textAlign: 'left' }}>
-                    <AlertTitle>For Hackathon Judges</AlertTitle>
-                    To view the **Beneficiary Dashboard**, use any 10-digit mobile number.<br/><br/>
-                    To view the **Officer Dashboard**, please use the mobile number:<br/>
-                    <strong>9999999999</strong>
-                    <br/>(Any 4-digit OTP will work for this number).
-                </Alert>
+    <AlertTitle>For Hackathon Judges</AlertTitle>
+    To test as a **Beneficiary**, use the mobile number:<br/>
+    <strong>8888888888</strong>
+    <br/><br/>
+    To test as an **Officer**, use the mobile number:<br/>
+    <strong>9999999999</strong>
+    <br/><br/>
+    (Any 4-digit OTP will work for these numbers)
+</Alert>
             </Box>
         </Container>
     );
