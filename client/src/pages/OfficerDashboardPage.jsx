@@ -9,11 +9,12 @@ import AddIcon from '@mui/icons-material/Add';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import axios from 'axios';
 
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 export default function OfficerDashboardPage() {
     const [user] = useState(() => {
         try {
             const storedUser = localStorage.getItem('user');
-            // Check for null or 'undefined' string before parsing
             if (storedUser && storedUser !== 'undefined') {
                 return JSON.parse(storedUser);
             }
@@ -35,8 +36,6 @@ export default function OfficerDashboardPage() {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-            
             const casesPromise = axios.get(`${apiBaseUrl}/api/cases`, { headers: { 'Authorization': `Bearer ${token}` } });
             const grievancesPromise = axios.get(`${apiBaseUrl}/api/grievances`, { headers: { 'Authorization': `Bearer ${token}` } });
 
@@ -69,7 +68,6 @@ export default function OfficerDashboardPage() {
     const handleUpdateStatus = async (caseId) => {
         try {
             const token = localStorage.getItem('token');
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
             await axios.put(`${apiBaseUrl}/api/cases/${caseId}/status`, {}, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -99,7 +97,6 @@ export default function OfficerDashboardPage() {
         }
         try {
             const token = localStorage.getItem('token');
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
             const caseData = { beneficiaryMobile, firDetails: { firNumber, policeStation } };
             await axios.post(`${apiBaseUrl}/api/cases`, caseData, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -114,7 +111,6 @@ export default function OfficerDashboardPage() {
     const handleResolveGrievance = async (grievanceId) => {
         try {
             const token = localStorage.getItem('token');
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
             await axios.put(`${apiBaseUrl}/api/grievances/${grievanceId}/resolve`, {}, { headers: { 'Authorization': `Bearer ${token}` } });
             fetchData();
         } catch (error) {
@@ -177,7 +173,6 @@ export default function OfficerDashboardPage() {
                         Enter the details for the new case. The beneficiary must already be registered in the system.
                     </DialogContentText>
                     <TextField autoFocus margin="dense" label="Beneficiary Mobile Number" type="text" fullWidth variant="standard" value={beneficiaryMobile} onChange={(e) => setBeneficiaryMobile(e.target.value)} />
-                    {/* THIS IS THE CORRECTED LINE */}
                     <TextField margin="dense" label="FIR Number" type="text" fullWidth variant="standard" value={firNumber} onChange={(e) => setFirNumber(e.target.value)} />
                     <TextField margin="dense" label="Police Station" type="text" fullWidth variant="standard" value={policeStation} onChange={(e) => setPoliceStation(e.target.value)} />
                 </DialogContent>

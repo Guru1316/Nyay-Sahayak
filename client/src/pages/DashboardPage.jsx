@@ -10,12 +10,16 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import axios from 'axios';
 
 const steps = ['Case Registered', 'Verification Pending', 'Sanction Pending', 'Disbursed'];
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 export default function DashboardPage() {
     const [user] = useState(() => {
         try {
             const storedUser = localStorage.getItem('user');
-            return storedUser ? JSON.parse(storedUser) : null;
+            if (storedUser && storedUser !== 'undefined') {
+                return JSON.parse(storedUser);
+            }
+            return null;
         } catch {
             return null;
         }
@@ -35,8 +39,6 @@ export default function DashboardPage() {
         try {
             const token = localStorage.getItem('token');
             if (!token) throw new Error("No token found");
-
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
             const casePromise = axios.get(`${apiBaseUrl}/api/cases/my-case`, { headers: { 'Authorization': `Bearer ${token}` } });
             const grievancePromise = axios.get(`${apiBaseUrl}/api/grievances/my-grievances`, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -83,7 +85,6 @@ export default function DashboardPage() {
         }
         try {
             const token = localStorage.getItem('token');
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
             await axios.post(`${apiBaseUrl}/api/grievances`, { details: grievanceDetails }, { headers: { 'Authorization': `Bearer ${token}` } });
             setGrievanceDetails('');
             handleCloseGrievanceDialog();
@@ -104,7 +105,6 @@ export default function DashboardPage() {
 
         try {
             const token = localStorage.getItem('token');
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
             const docData = { docType: 'Bank Passbook', docName: file.name };
 
             await axios.post(`${apiBaseUrl}/api/cases/${caseId}/documents`, docData, {
@@ -129,7 +129,7 @@ export default function DashboardPage() {
     const renderCaseContent = () => {
         if (loading) return <CircularProgress sx={{ display: 'block', margin: 'auto', mt: 4 }} />;
         if (error) return <Typography color="error" align="center" sx={{ mt: 4 }}>Error: {error}</Typography>;
-        if (cases.length === 0) {
+        if (!cases || cases.length === 0) {
             return (
                 <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
                     <Typography variant="h6">No Active Cases Found</Typography>
@@ -164,7 +164,7 @@ export default function DashboardPage() {
                         <Box sx={{ mt: 2 }}>
                             <Typography variant="subtitle1">Uploaded Documents:</Typography>
                             <List dense>
-                                {caseData.documents.length > 0 ? caseData.documents.map((doc, i) => (
+                                {caseData.documents && caseData.documents.length > 0 ? caseData.documents.map((doc, i) => (
                                     <ListItem key={i}><ListItemText primary={doc.docType} secondary={doc.docUrl} /></ListItem>
                                 )) : <Typography color="text.secondary" sx={{p:1}}>No documents uploaded for this case.</Typography>}
                             </List>
@@ -194,7 +194,7 @@ export default function DashboardPage() {
                 <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography variant="h6">Grievance History</Typography>
-                        <Button variant="outlined" onClick={handleOpenGrievanceDialog} disabled={cases.length === 0 || loading}>
+                        <Button variant="outlined" onClick={handleOpenGrievanceDialog} disabled={!cases || cases.length === 0 || loading}>
                             Raise a Grievance
                         </Button>
                     </Box>

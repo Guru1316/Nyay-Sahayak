@@ -6,24 +6,25 @@ import { Box, CircularProgress } from '@mui/material';
 
 function App() {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true); // Add loading state
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         try {
             const storedUser = localStorage.getItem('user');
-            if (storedUser) {
+            // Check for null OR the literal string "undefined" before parsing
+            if (storedUser && storedUser !== 'undefined') {
                 setUser(JSON.parse(storedUser));
             }
         } catch (error) {
-            // If parsing fails, clear the invalid item
-            console.error("Failed to parse user from localStorage", error);
+            console.error("Failed to parse user from localStorage, clearing invalid data.", error);
             localStorage.removeItem('user');
             localStorage.removeItem('token');
         } finally {
-            setLoading(false); // Stop loading once user is checked
+            setLoading(false);
         }
     }, []);
 
+    // Show a loading spinner while we check for a user
     if (loading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -32,26 +33,19 @@ function App() {
         );
     }
 
-    const renderDashboard = () => {
-        if (!user) {
-            return <LoginPage />;
-        }
+    // Now, decide which page to render
+    if (!user) {
+        return <LoginPage />;
+    }
 
-        switch (user.role) {
-            case 'officer':
-            case 'admin':
-                return <OfficerDashboardPage />;
-            case 'beneficiary':
-            default:
-                return <DashboardPage />;
-        }
-    };
-
-    return (
-        <div>
-            {renderDashboard()}
-        </div>
-    );
+    switch (user.role) {
+        case 'officer':
+        case 'admin':
+            return <OfficerDashboardPage />;
+        case 'beneficiary':
+        default:
+            return <DashboardPage />;
+    }
 }
 
 export default App;
