@@ -13,7 +13,11 @@ export default function OfficerDashboardPage() {
     const [user] = useState(() => {
         try {
             const storedUser = localStorage.getItem('user');
-            return storedUser ? JSON.parse(storedUser) : null;
+            // Check for null or 'undefined' string before parsing
+            if (storedUser && storedUser !== 'undefined') {
+                return JSON.parse(storedUser);
+            }
+            return null;
         } catch {
             return null;
         }
@@ -173,7 +177,8 @@ export default function OfficerDashboardPage() {
                         Enter the details for the new case. The beneficiary must already be registered in the system.
                     </DialogContentText>
                     <TextField autoFocus margin="dense" label="Beneficiary Mobile Number" type="text" fullWidth variant="standard" value={beneficiaryMobile} onChange={(e) => setBeneficiaryMobile(e.target.value)} />
-                    <TextField margin="dense" label="FIR Number" type="text" fullWidth variant="standard" value={firNumber} onChange={(e) => setFirNumber(e.g.value)} />
+                    {/* THIS IS THE CORRECTED LINE */}
+                    <TextField margin="dense" label="FIR Number" type="text" fullWidth variant="standard" value={firNumber} onChange={(e) => setFirNumber(e.target.value)} />
                     <TextField margin="dense" label="Police Station" type="text" fullWidth variant="standard" value={policeStation} onChange={(e) => setPoliceStation(e.target.value)} />
                 </DialogContent>
                 <DialogActions>
